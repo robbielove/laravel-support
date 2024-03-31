@@ -19,33 +19,25 @@ Install via `composer require rinvex/laravel-support`
 
 ## Usage
 
-## Support Helpers
-
-### `intend()`
-
-The `intend` method returns redirect response:
-```php
-intend([
-    'route' => 'route.name.here',
-    'withErrors' => ['error.message.id' => 'A custom error message'],
-]);
-```
-
-> **Note:** this helper accepts `redirect` methods as it's input keys, such as `withErrors`, `with`, `back`, and `route` ..etc
-
-### `mimetypes()`
+### `mimetypes()` helper
 
 The `mimetypes` method gets valid mime types:
 ```php
 $mimetypes = mimetypes();
 ```
 
-### `timezones()`
+### `timezones()` helper
 
 The `timezones` method gets valid timezones:
 ```php
 $timezones = timezones();
 ```
+
+### unique_with Validator Rule
+
+This feature contains a variant of the `validateUnique` rule for Laravel, that allows for validation of multi-column UNIQUE indexes.
+
+It was forked and merged from the awesome [felixkiss/uniquewith-validator](https://github.com/felixkiss/uniquewith-validator) package, which at the time been outdated and un-maintained for a long time. Many thanks to core contributors for developing this.
 
 
 ## Changelog

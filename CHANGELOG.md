@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](CONTRIBUTING.md).
 
 
+## [v7.3.1] - 2023-08-30
+- Support new accessarea file-based structure
+
+## [v7.3.0] - 2023-08-28
+- Support multiple themes
+- Remove `/vendor` from namespaced view paths to simplify the path
+
+## [v7.2.6] - 2023-08-16
+- Register models as singletons by default
+
+## [v7.2.5] - 2023-08-02
+- If view global path exists in the view hints, remove and prepend to eliminate duplicates, and keep precedence
+- Prepend view global paths to take precedence over modules & extensions
+
+## [v7.2.4] - 2023-07-25
+- Move unique_with validation rule to rinvex/laravel-support from cortex/foundation
+
+## [v7.2.3] - 2023-07-22
+- Remove intend() method docs to cortex/foundation
+- Override ServiceProvider::loadViewsFrom to prepend namespaces instead of appending, allowing extensions to have precedence and override parent module views
+
+## [v7.2.2] - 2023-07-03
+- Update composer dependencies
+
+## [v7.2.1] - 2023-06-29
+- Refactor resource loading and publishing
+
+## [v7.2.0] - 2023-06-10
+- Add module extensions support to service provider vendor publishing
+- Bind models in IoC service container only if not bound already
+- Remove unused global function array_filter_recursive
+
+## [v7.1.0] - 2023-05-02
+- 4eee070: Add support for Laravel v11, and drop support for Laravel v9
+- b0b7595: Upgrade spatie/laravel-schemaless-attributes to v2.4 from v2.3
+- e97387d: Update watson/validating to v8.0 from v7.0
+- 8543fdd: Update phpunit to v10.1 from v9.5
+
 ## [v7.0.1] - 2023-01-15
 - Remove unused method call `runningInDevzone`
 
@@ -285,6 +323,16 @@ This project adheres to [Semantic Versioning](CONTRIBUTING.md).
 ## v0.0.1 - 2016-12-20
 - Tag first release
 
+[v7.3.1]: https://github.com/rinvex/laravel-support/compare/v7.3.0...v7.3.1
+[v7.3.0]: https://github.com/rinvex/laravel-support/compare/v7.2.6...v7.3.0
+[v7.2.6]: https://github.com/rinvex/laravel-support/compare/v7.2.5...v7.2.6
+[v7.2.5]: https://github.com/rinvex/laravel-support/compare/v7.2.4...v7.2.5
+[v7.2.4]: https://github.com/rinvex/laravel-support/compare/v7.2.3...v7.2.4
+[v7.2.3]: https://github.com/rinvex/laravel-support/compare/v7.2.2...v7.2.3
+[v7.2.2]: https://github.com/rinvex/laravel-support/compare/v7.2.1...v7.2.2
+[v7.2.1]: https://github.com/rinvex/laravel-support/compare/v7.2.0...v7.2.1
+[v7.2.0]: https://github.com/rinvex/laravel-support/compare/v7.1.0...v7.2.0
+[v7.1.0]: https://github.com/rinvex/laravel-support/compare/v7.0.1...v7.1.0
 [v7.0.1]: https://github.com/rinvex/laravel-support/compare/v7.0.0...v7.0.1
 [v7.0.0]: https://github.com/rinvex/laravel-support/compare/v6.1.5...v7.0.0
 [v6.1.5]: https://github.com/rinvex/laravel-support/compare/v6.1.4...v6.1.5

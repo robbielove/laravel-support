@@ -9,31 +9,58 @@ use Illuminate\Support\Str;
 trait ConsoleTools
 {
     /**
-     * Publish package migrations.
+     * Register a view file namespace.
+     *
+     * @override \Illuminate\Support\ServiceProvider::loadViewsFrom This method override views-loading to prepend
+     *           namespaces instead of appending, allowing extensions to have precedence and override module views.
+     *           We also changed `$appPath` to support multiple themes, and removed `/vendor` to simplify the path.
+     *
+     * @param string|array $path
+     * @param string       $namespace
      *
      * @return void
      */
-    protected function publishesMigrations(string $package, bool $isModule = false): void
+    protected function loadViewsFrom($path, $namespace)
     {
-        if (! $this->publishesResources()) {
-            return;
-        }
+        $this->callAfterResolving('view', function ($view) use ($path, $namespace) {
+            $view->prependNamespace($namespace, $path);
 
-        $namespace = str_replace('laravel-', '', $package);
-        $basePath = $isModule ? $this->app->path($package)
-            : $this->app->basePath('vendor/'.$package);
+            if (isset($this->app->config['view']['paths']) && is_array($this->app->config['view']['paths'])) {
+                foreach ($this->app->config['view']['paths'] as $viewPath) {
+                    if (is_dir($appPath = $viewPath.'/'.$namespace.'/views')) {
+                        $hints = $view->getFinder()->getHints();
 
-        if (file_exists($path = $basePath.'/database/migrations')) {
+                        if ($exists = array_search($appPath, $hints[$namespace])) {
+                            unset($hints[$namespace][$exists]);
+                            $view->getFinder()->replaceNamespace($namespace, array_values($hints[$namespace]));
+                        }
+
+                        $view->prependNamespace($namespace, $appPath);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Register migration paths to be published by the publish command.
+     *
+     * @param string $path
+     * @param string $namespace
+     *
+     * @return void
+     */
+    protected function publishMigrationsFrom(string $path, string $namespace): void
+    {
+        if (file_exists($path)) {
             $stubs = $this->app['files']->glob($path.'/*.php');
-            $existing = $this->app['files']->glob($this->app->databasePath('migrations/'.$package.'/*.php'));
+            $existing = $this->app['files']->glob($this->app->databasePath('migrations/'.$namespace.'/*.php'));
 
-            $migrations = collect($stubs)->flatMap(function ($migration) use ($existing, $package) {
+            $migrations = collect($stubs)->flatMap(function ($migration) use ($existing, $namespace) {
                 $sequence = mb_substr(basename($migration), 0, 17);
-                $match = collect($existing)->first(function ($item, $key) use ($migration, $sequence) {
-                    return mb_strpos($item, str_replace($sequence, '', basename($migration))) !== false;
-                });
+                $match = collect($existing)->first(fn ($item, $key) => mb_strpos($item, str_replace($sequence, '', basename($migration))) !== false);
 
-                return [$migration => $this->app->databasePath('migrations/'.$package.'/'.($match ? basename($match) : date('Y_m_d_His', time() + mb_substr($sequence, -6)).str_replace($sequence, '', basename($migration))))];
+                return [$migration => $this->app->databasePath('migrations/'.$namespace.'/'.($match ? basename($match) : date('Y_m_d_His', time() + mb_substr($sequence, -6)).str_replace($sequence, '', basename($migration))))];
             })->toArray();
 
             $this->publishes($migrations, $namespace.'::migrations');
@@ -41,63 +68,42 @@ trait ConsoleTools
     }
 
     /**
-     * Publish package config.
+     * Register config paths to be published by the publish command.
+     *
+     * @param string $path
+     * @param string $namespace
      *
      * @return void
      */
-    protected function publishesConfig(string $package, bool $isModule = false): void
+    protected function publishConfigFrom(string $path, string $namespace): void
     {
-        if (! $this->publishesResources()) {
-            return;
-        }
-
-        $namespace = str_replace('laravel-', '', $package);
-        $basePath = $isModule ? $this->app->path($package)
-            : $this->app->basePath('vendor/'.$package);
-
-        if (file_exists($path = $basePath.'/config/config.php')) {
-            $this->publishes([$path => $this->app->configPath(str_replace('/', '.', $namespace).'.php')], $namespace.'::config');
-        }
+        ! file_exists($path) || $this->publishes([$path => $this->app->configPath(str_replace('/', '.', $namespace).'.php')], $namespace.'::config');
     }
 
     /**
-     * Publish package views.
+     * Register view paths to be published by the publish command.
+     *
+     * @param string $path
+     * @param string $namespace
      *
      * @return void
      */
-    protected function publishesViews(string $package, bool $isModule = false): void
+    protected function publishViewsFrom(string $path, string $namespace): void
     {
-        if (! $this->publishesResources()) {
-            return;
-        }
-
-        $namespace = str_replace('laravel-', '', $package);
-        $basePath = $isModule ? $this->app->path($package)
-            : $this->app->basePath('vendor/'.$package);
-
-        if (file_exists($path = $basePath.'/resources/views')) {
-            $this->publishes([$path => $this->app->resourcePath('views/vendor/'.$package)], $namespace.'::views');
-        }
+        ! file_exists($path) || $this->publishes([$path => $this->app->resourcePath('views/vendor/'.$namespace)], $namespace.'::views');
     }
 
     /**
-     * Publish package lang.
+     * Register lang paths to be published by the publish command.
+     *
+     * @param string $path
+     * @param string $namespace
      *
      * @return void
      */
-    protected function publishesLang(string $package, bool $isModule = false): void
+    protected function publishTranslationsFrom(string $path, string $namespace): void
     {
-        if (! $this->publishesResources()) {
-            return;
-        }
-
-        $namespace = str_replace('laravel-', '', $package);
-        $basePath = $isModule ? $this->app->path($package)
-            : $this->app->basePath('vendor/'.$package);
-
-        if (file_exists($path = $basePath.'/resources/lang')) {
-            $this->publishes([$path => $this->app->resourcePath('lang/vendor/'.$package)], $namespace.'::lang');
-        }
+        ! file_exists($path) || $this->publishes([$path => $this->app->resourcePath('lang/vendor/'.$namespace)], $namespace.'::lang');
     }
 
     /**
@@ -110,30 +116,9 @@ trait ConsoleTools
     protected function registerModels(array $models): void
     {
         foreach ($models as $service => $class) {
-            $this->app->singleton($service, $model = $this->app['config'][Str::replaceLast('.', '.models.', $service)]);
+            $this->app->singletonIf($service, $model = $this->app['config'][Str::replaceLast('.', '.models.', $service)]);
             $model === $class || $this->app->alias($service, $class);
+            $this->app->singletonIf($model, $model);
         }
-    }
-
-    /**
-     * Can publish resources.
-     *
-     * @return bool
-     */
-    protected function publishesResources(): bool
-    {
-        return ! $this->app->environment('production') || $this->app->runningInConsole();
-    }
-
-    /**
-     * Can autoload migrations.
-     *
-     * @param string $module
-     *
-     * @return bool
-     */
-    protected function autoloadMigrations(string $module): bool
-    {
-        return $this->publishesResources() && $this->app['config'][str_replace(['laravel-', '/'], ['', '.'], $module).'.autoload_migrations'];
     }
 }
